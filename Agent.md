@@ -146,21 +146,58 @@ Agent:={
 
 ## 1.请解释 RAG 的工作原理。与直接对 LLM 进行微调相比，RAG 主要解决了什么问题？有哪些优势？
 
-在外部知识库 中检索语义最近邻文档，再将其拼接进提示上下文，驱动 LLM 生成有据可查的响应——整个过程不改变动模型权重。相比微调，RAG 的核心优势在于三点：知识可实时更新，无需重训练、响应可溯源，检索文档显式可见、幻觉率更低。
+RAG在大语言模型前先访问数据库（向量数据库或者知识图谱库），从数据库中检索出相符的文本或者向量，做一个提示词增强然后输入给LLM。
 
-> 对比：ES是全文搜索，偏向于关键词匹配，难以衡量语义相关度
+- 一定程度上解决了模型的幻觉问题
+- 可以接入本地知识库（私有库）
 
 ## 2.RAG 怎么解决 LLM 上下文窗口有限的问题？
 
 
 
-## 3.RAG，FunctionCall，MCP了解么，简单说下说说原理
+## 3.Function Call，MCP了解么
 
+![image31](./assets/image31.png)
 
+图中4是function call
+
+```
+函数调用
+functions = [{
+    "name": "get_weather",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "location": {"type": "string"}
+        }
+    }
+}]
+```
+
+```
+MCP插件
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/me/data"]
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
 
 ## 4.Websocket和SSE区别是什么
 
+SSE是单向通信，是由服务端发送客户端的。目前主流LLM对话基于SSE
 
+WebSocket是双向通信
 
 ## 5.一个完整的 RAG 流水线包含哪些关键步骤？请从数据准备到最终生成，详细描述整个过程。
 
