@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>测试</title>
+</head>
+<body>
+  <div id="content"></div>
+  <div id="toc"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@14.1.3/marked.min.js"></script>
+  <script>
+    (async function () {
+      const target = document.getElementById("content");
+      const tocDiv = document.getElementById("toc");
+
+      try {
+        const res = await fetch("Agent.md", { cache: "no-cache" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const md = await res.text();
+
+        console.log("Markdown loaded, length:", md.length);
+
+        marked.setOptions({ gfm: true, breaks: false });
+        target.innerHTML = marked.parse(md);
+
+        console.log("Markdown parsed");
+
+        const headings = target.querySelectorAll('h1, h2');
+        console.log("Found headings:", headings.length);
+
+        headings.forEach((h, i) => {
+          console.log(`Heading ${i}:`, h.tagName, h.textContent.substring(0, 50));
+          h.id = 'heading-' + i;
+        });
+
+        const h1h2 = target.querySelectorAll('h1[id], h2[id]');
+        console.log("Headings with ID:", h1h2.length);
+
+        let tocHTML = '<ul>';
+        h1h2.forEach(h => {
+          tocHTML += `<li>${h.tagName}: ${h.textContent}</li>`;
+        });
+        tocHTML += '</ul>';
+        tocDiv.innerHTML = tocHTML;
+
+      } catch (err) {
+        console.error("Error:", err);
+        target.innerHTML = "Error: " + err.message;
+      }
+    })();
+  </script>
+</body>
+</html>

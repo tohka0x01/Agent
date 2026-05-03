@@ -166,21 +166,7 @@
           if (!res.ok) throw new Error("HTTP " + res.status);
           const md = await res.text();
 
-          // 配置自定义渲染器生成标题 ID
-          const renderer = new marked.Renderer();
-          const headingIds = new Map();
-
-          renderer.heading = function(text, level) {
-            if (level === 1 || level === 2) {
-              const slug = generateSlug(text, headingIds);
-              headingIds.set(slug, true);
-              return `<h${level} id="${slug}">${text}</h${level}>`;
-            }
-            return `<h${level}>${text}</h${level}>`;
-          };
-
           marked.setOptions({
-            renderer: renderer,
             gfm: true,
             breaks: false,
             highlight: function (code, lang) {
@@ -195,10 +181,23 @@
             },
           });
 
-          target.innerHTML = marked.parse(md);
+          // 渲染 markdown
+          const html = typeof marked.parse === 'function'
+            ? marked.parse(md)
+            : marked(md);
+          target.innerHTML = html;
+
+          console.log("Markdown rendered");
+
+          // 为标题添加 ID
+          addHeadingIds();
+
+          console.log("Heading IDs added");
 
           // 构建目录
           buildTOC();
+
+          console.log("TOC built");
 
           // 设置滚动监听
           setupScrollSpy();
@@ -210,10 +209,27 @@
             (target.querySelector("h1")?.textContent || "Agent").trim() +
             " - 面试整理";
         } catch (err) {
+          console.error("Error loading markdown:", err);
           target.innerHTML =
             '<div id="loading">加载失败: ' +
             String(err).replace(/[<>&]/g, "") +
             "</div>";
+        }
+
+        // 为标题添加 ID
+        function addHeadingIds() {
+          const headings = target.querySelectorAll('h1, h2');
+          const headingIds = new Map();
+
+          console.log("addHeadingIds: found", headings.length, "headings");
+
+          headings.forEach(heading => {
+            const text = heading.textContent;
+            const slug = generateSlug(text, headingIds);
+            headingIds.set(slug, true);
+            heading.id = slug;
+            console.log(`Set ID: ${slug} for ${text.substring(0, 30)}`);
+          });
         }
 
         // 生成 URL 友好的 slug
@@ -238,12 +254,17 @@
         function buildTOC() {
           const tocList = document.getElementById("toc-list");
           const headings = target.querySelectorAll('h1[id], h2[id]');
+
+          console.log("Building TOC, found headings:", headings.length);
+
           const fragment = document.createDocumentFragment();
 
           headings.forEach(heading => {
             const level = heading.tagName.toLowerCase();
             const text = heading.textContent;
             const id = heading.id;
+
+            console.log(`Adding to TOC: ${level} - ${text.substring(0, 30)}`);
 
             const li = document.createElement('li');
             li.className = `toc-${level}`;
@@ -259,6 +280,8 @@
 
           tocList.innerHTML = '';
           tocList.appendChild(fragment);
+
+          console.log("TOC list updated, children:", tocList.children.length);
         }
 
         // 滚动时高亮当前章节
