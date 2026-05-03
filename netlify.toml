@@ -1,0 +1,8 @@
+[build]
+  publish = "."
+
+# Make sure .md files are served as text/markdown so fetch() can read them
+[[headers]]
+  for = "/*.md"
+  [headers.values]
+    Content-Type = "text/markdown; charset=utf-8"
