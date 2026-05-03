@@ -15,41 +15,146 @@
     <style>
       body {
         margin: 0;
+        padding: 0;
         background: #f6f8fa;
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
           "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       }
+
+      /* 双栏容器 */
+      .container {
+        display: flex;
+        min-height: 100vh;
+        background: #f6f8fa;
+      }
+
+      /* 左侧目录栏 */
+      .toc-sidebar {
+        width: 280px;
+        background: #ffffff;
+        border-right: 1px solid #d0d7de;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        flex-shrink: 0;
+      }
+
+      .toc-nav {
+        padding: 24px 16px;
+      }
+
+      .toc-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1f2328;
+        margin-bottom: 12px;
+        padding: 0 8px;
+      }
+
+      .toc-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .toc-list li {
+        margin: 0;
+      }
+
+      .toc-list a {
+        display: block;
+        padding: 6px 8px;
+        font-size: 13px;
+        color: #57606a;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+        line-height: 1.5;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .toc-list a:hover {
+        background: #f6f8fa;
+        color: #1f2328;
+        white-space: normal;
+        word-break: break-word;
+      }
+
+      .toc-list a.active {
+        background: #ddf4ff;
+        color: #0969da;
+        font-weight: 500;
+      }
+
+      /* H1 标题样式 */
+      .toc-list .toc-h1 > a {
+        font-weight: 600;
+        color: #1f2328;
+        margin-top: 8px;
+      }
+
+      /* H2 标题样式（缩进） */
+      .toc-list .toc-h2 > a {
+        padding-left: 24px;
+        font-size: 12px;
+      }
+
+      /* 右侧内容区 */
+      .content-wrapper {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        justify-content: center;
+      }
+
       .markdown-body {
         box-sizing: border-box;
+        width: 100%;
         max-width: 960px;
-        margin: 0 auto;
+        margin: 32px 48px;
         padding: 32px 48px 64px;
         background: #ffffff;
         border-radius: 6px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
       }
+
       .markdown-body img {
         max-width: 100%;
         height: auto;
       }
+
       #loading {
         text-align: center;
         padding: 80px 16px;
         color: #57606a;
       }
-      @media (max-width: 720px) {
-        .markdown-body {
-          padding: 16px;
-          border-radius: 0;
-        }
+
+      /* 平滑滚动 */
+      html {
+        scroll-behavior: smooth;
       }
     </style>
   </head>
   <body>
-    <article id="content" class="markdown-body">
-      <div id="loading">正在加载 Agent.md ...</div>
-    </article>
+    <div class="container">
+      <aside class="toc-sidebar">
+        <nav class="toc-nav">
+          <div class="toc-title">目录</div>
+          <ul id="toc-list" class="toc-list">
+            <li style="color: #57606a; padding: 8px;">加载中...</li>
+          </ul>
+        </nav>
+      </aside>
+      <main class="content-wrapper">
+        <article id="content" class="markdown-body">
+          <div id="loading">正在加载 Agent.md ...</div>
+        </article>
+      </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked@14.1.3/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/index.min.js"></script>
@@ -61,7 +166,21 @@
           if (!res.ok) throw new Error("HTTP " + res.status);
           const md = await res.text();
 
+          // 配置自定义渲染器生成标题 ID
+          const renderer = new marked.Renderer();
+          const headingIds = new Map();
+
+          renderer.heading = function(text, level) {
+            if (level === 1 || level === 2) {
+              const slug = generateSlug(text, headingIds);
+              headingIds.set(slug, true);
+              return `<h${level} id="${slug}">${text}</h${level}>`;
+            }
+            return `<h${level}>${text}</h${level}>`;
+          };
+
           marked.setOptions({
+            renderer: renderer,
             gfm: true,
             breaks: false,
             highlight: function (code, lang) {
@@ -77,6 +196,16 @@
           });
 
           target.innerHTML = marked.parse(md);
+
+          // 构建目录
+          buildTOC();
+
+          // 设置滚动监听
+          setupScrollSpy();
+
+          // 设置平滑滚动
+          setupSmoothScroll();
+
           document.title =
             (target.querySelector("h1")?.textContent || "Agent").trim() +
             " - 面试整理";
@@ -85,6 +214,110 @@
             '<div id="loading">加载失败: ' +
             String(err).replace(/[<>&]/g, "") +
             "</div>";
+        }
+
+        // 生成 URL 友好的 slug
+        function generateSlug(text, existingIds) {
+          let slug = text.replace(/\*+/g, '');
+          slug = slug
+            .toLowerCase()
+            .trim()
+            .replace(/[^一-龥a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '');
+
+          let finalSlug = slug;
+          let counter = 1;
+          while (existingIds.has(finalSlug)) {
+            finalSlug = `${slug}-${counter}`;
+            counter++;
+          }
+          return finalSlug;
+        }
+
+        // 构建目录
+        function buildTOC() {
+          const tocList = document.getElementById("toc-list");
+          const headings = target.querySelectorAll('h1[id], h2[id]');
+          const fragment = document.createDocumentFragment();
+
+          headings.forEach(heading => {
+            const level = heading.tagName.toLowerCase();
+            const text = heading.textContent;
+            const id = heading.id;
+
+            const li = document.createElement('li');
+            li.className = `toc-${level}`;
+
+            const a = document.createElement('a');
+            a.href = `#${id}`;
+            a.textContent = text;
+            a.dataset.target = id;
+
+            li.appendChild(a);
+            fragment.appendChild(li);
+          });
+
+          tocList.innerHTML = '';
+          tocList.appendChild(fragment);
+        }
+
+        // 滚动时高亮当前章节
+        function setupScrollSpy() {
+          const headings = Array.from(target.querySelectorAll('h1[id], h2[id]'));
+          const tocLinks = Array.from(document.querySelectorAll('.toc-list a'));
+          let ticking = false;
+
+          function updateActiveLink() {
+            const scrollPos = window.scrollY + 100;
+            let activeHeading = null;
+
+            for (let i = headings.length - 1; i >= 0; i--) {
+              if (headings[i].offsetTop <= scrollPos) {
+                activeHeading = headings[i];
+                break;
+              }
+            }
+
+            tocLinks.forEach(link => {
+              if (activeHeading && link.dataset.target === activeHeading.id) {
+                link.classList.add('active');
+              } else {
+                link.classList.remove('active');
+              }
+            });
+
+            ticking = false;
+          }
+
+          function onScroll() {
+            if (!ticking) {
+              window.requestAnimationFrame(updateActiveLink);
+              ticking = true;
+            }
+          }
+
+          window.addEventListener('scroll', onScroll, { passive: true });
+          updateActiveLink();
+        }
+
+        // 点击目录平滑滚动
+        function setupSmoothScroll() {
+          const tocList = document.getElementById('toc-list');
+          tocList.addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+              e.preventDefault();
+              const targetId = e.target.dataset.target;
+              const targetElement = document.getElementById(targetId);
+
+              if (targetElement) {
+                const offsetTop = targetElement.offsetTop - 20;
+                window.scrollTo({
+                  top: offsetTop,
+                  behavior: 'smooth'
+                });
+              }
+            }
+          });
         }
       })();
     </script>
