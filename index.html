@@ -325,6 +325,20 @@
         font-size: 12px;
       }
 
+      .toc-list .toc-h3 {
+        display: none;
+      }
+
+      .toc-list .toc-h3.expanded {
+        display: list-item;
+      }
+
+      .toc-list .toc-h3 > a {
+        padding-left: 40px;
+        font-size: 12px;
+        color: #6e7781;
+      }
+
       /* 右侧内容区 */
       .content-wrapper {
         flex: 1;
@@ -442,6 +456,10 @@
 
       [data-theme="dark"] .toc-list a {
         color: #7d8590;
+      }
+
+      [data-theme="dark"] .toc-list .toc-h3 > a {
+        color: #6e7681;
       }
 
       [data-theme="dark"] .toc-list a:hover {
@@ -759,7 +777,7 @@
 
         // 为标题添加 ID
         function addHeadingIds() {
-          const headings = target.querySelectorAll('h1, h2');
+          const headings = target.querySelectorAll('h1, h2, h3');
           const headingIds = new Map();
 
           console.log("addHeadingIds: found", headings.length, "headings");
@@ -794,26 +812,43 @@
         // 构建目录
         function buildTOC() {
           const tocList = document.getElementById("toc-list");
-          const headings = target.querySelectorAll('h1[id], h2[id]');
+          const headings = target.querySelectorAll('h1[id], h2[id], h3[id]');
 
           console.log("Building TOC, found headings:", headings.length);
 
           const fragment = document.createDocumentFragment();
+          let currentH2Id = null;
 
           headings.forEach(heading => {
             const level = heading.tagName.toLowerCase();
             const text = heading.textContent;
             const id = heading.id;
 
+            if (level === 'h2') {
+              currentH2Id = id;
+            }
+
+            if (level === 'h3' && !currentH2Id) {
+              return;
+            }
+
             console.log(`Adding to TOC: ${level} - ${text.substring(0, 30)}`);
 
             const li = document.createElement('li');
             li.className = `toc-${level}`;
 
+            if (level === 'h3') {
+              li.dataset.parent = currentH2Id;
+            }
+
             const a = document.createElement('a');
             a.href = `#${id}`;
             a.textContent = text;
             a.dataset.target = id;
+
+            if (level === 'h3') {
+              a.dataset.parent = currentH2Id;
+            }
 
             li.appendChild(a);
             fragment.appendChild(li);
@@ -825,9 +860,35 @@
           console.log("TOC list updated, children:", tocList.children.length);
         }
 
+        function updateExpandedTOC(activeHeading) {
+          const h3Items = Array.from(document.querySelectorAll('.toc-h3'));
+          h3Items.forEach(item => item.classList.remove('expanded'));
+
+          if (!activeHeading) return;
+
+          const level = activeHeading.tagName.toLowerCase();
+          let activeH2Id = null;
+
+          if (level === 'h2') {
+            activeH2Id = activeHeading.id;
+          } else if (level === 'h3') {
+            const activeLink = Array.from(document.querySelectorAll('.toc-list a'))
+              .find(link => link.dataset.target === activeHeading.id);
+            activeH2Id = activeLink?.dataset.parent || null;
+          }
+
+          if (!activeH2Id) return;
+
+          h3Items.forEach(item => {
+            if (item.dataset.parent === activeH2Id) {
+              item.classList.add('expanded');
+            }
+          });
+        }
+
         // 滚动时高亮当前章节
         function setupScrollSpy() {
-          const headings = Array.from(target.querySelectorAll('h1[id], h2[id]'));
+          const headings = Array.from(target.querySelectorAll('h1[id], h2[id], h3[id]'));
           const tocLinks = Array.from(document.querySelectorAll('.toc-list a'));
           let ticking = false;
 
@@ -849,6 +910,8 @@
                 link.classList.remove('active');
               }
             });
+
+            updateExpandedTOC(activeHeading);
 
             ticking = false;
           }
@@ -874,6 +937,8 @@
               const targetElement = document.getElementById(targetId);
 
               if (targetElement) {
+                updateExpandedTOC(targetElement);
+
                 const offsetTop = targetElement.offsetTop - HEADER_OFFSET;
                 window.scrollTo({
                   top: Math.max(0, offsetTop),
