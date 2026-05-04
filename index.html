@@ -4,28 +4,250 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Agent 面试整理</title>
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.6.1/github-markdown-light.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/github.min.css"
-    />
+    <script>
+      (function () {
+        function getStoredTheme() {
+          try {
+            return localStorage.getItem("theme");
+          } catch (_) {
+            return null;
+          }
+        }
+
+        const storedTheme = getStoredTheme();
+        const prefersDark =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const validStoredTheme =
+          storedTheme === "light" || storedTheme === "dark"
+            ? storedTheme
+            : null;
+        const theme = validStoredTheme || (prefersDark ? "dark" : "light");
+
+        document.documentElement.setAttribute("data-theme", theme);
+        document.write(
+          '<link id="markdown-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/github-markdown-css@5.6.1/github-markdown-' +
+            theme +
+            '.min.css" />',
+        );
+        document.write(
+          '<link id="highlight-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/' +
+            (theme === "dark" ? "github-dark" : "github") +
+            '.min.css" />',
+        );
+      })();
+    </script>
     <style>
+      :root {
+        --header-height: 60px;
+        --header-offset: 80px;
+      }
+
       body {
         margin: 0;
         padding: 0;
         background: #f6f8fa;
+        color: #1f2328;
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
           "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+
+      .site-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        height: var(--header-height);
+        background: #ffffff;
+        border-bottom: 1px solid #d0d7de;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      }
+
+      .header-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
+
+      .header-brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1f2328;
+        text-decoration: none;
+      }
+
+      .brand-icon {
+        font-size: 28px;
+        line-height: 1;
+      }
+
+      .brand-name {
+        font-size: 18px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .header-nav {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        gap: 8px;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 16px;
+        color: #57606a;
+        background: none;
+        border: 0;
+        border-radius: 6px;
+        font: inherit;
+        font-size: 14px;
+        text-decoration: none;
+        white-space: nowrap;
+        cursor: pointer;
+        transition:
+          background 0.2s ease,
+          color 0.2s ease;
+      }
+
+      .nav-item:hover {
+        background: #f6f8fa;
+        color: #1f2328;
+      }
+
+      .nav-item.active {
+        color: #0969da;
+        font-weight: 500;
+      }
+
+      .dropdown {
+        position: relative;
+      }
+
+      .dropdown-toggle::after {
+        content: "";
+        width: 0;
+        height: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+        border-top: 4px solid currentColor;
+        transition: transform 0.2s ease;
+      }
+
+      .dropdown.open .dropdown-toggle::after {
+        transform: rotate(180deg);
+      }
+
+      .dropdown-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 50%;
+        z-index: 100;
+        min-width: 184px;
+        padding: 8px;
+        background: #ffffff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateX(-50%) translateY(-4px);
+        transition:
+          opacity 0.2s ease,
+          transform 0.2s ease,
+          visibility 0.2s ease;
+      }
+
+      .dropdown.open .dropdown-menu {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .dropdown-item {
+        display: block;
+        padding: 8px 12px;
+        color: #1f2328;
+        border-radius: 6px;
+        font-size: 14px;
+        line-height: 1.4;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background 0.15s ease;
+      }
+
+      .dropdown-item:hover {
+        background: #f6f8fa;
+      }
+
+      .dropdown-item.greeting {
+        margin-bottom: 4px;
+        padding-bottom: 8px;
+        color: #57606a;
+        border-bottom: 1px solid #d0d7de;
+        cursor: default;
+      }
+
+      .dropdown-item.greeting:hover {
+        background: transparent;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        color: #57606a;
+        background: none;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none;
+        transition:
+          background 0.2s ease,
+          border-color 0.2s ease,
+          color 0.2s ease;
+      }
+
+      .action-btn:hover {
+        background: #f6f8fa;
+        border-color: #57606a;
+        color: #1f2328;
+      }
+
+      .theme-toggle .moon-icon,
+      [data-theme="dark"] .theme-toggle .sun-icon {
+        display: none;
+      }
+
+      [data-theme="dark"] .theme-toggle .moon-icon {
+        display: block;
       }
 
       /* 双栏容器 */
       .container {
         display: flex;
         min-height: 100vh;
+        margin-top: var(--header-height);
         background: #f6f8fa;
       }
 
@@ -35,8 +257,8 @@
         background: #ffffff;
         border-right: 1px solid #d0d7de;
         position: sticky;
-        top: 0;
-        height: 100vh;
+        top: var(--header-height);
+        height: calc(100vh - var(--header-height));
         overflow-y: auto;
         flex-shrink: 0;
       }
@@ -133,19 +355,239 @@
         color: #57606a;
       }
 
+      .toc-loading {
+        padding: 8px;
+        color: #57606a;
+      }
+
       /* 平滑滚动 */
       html {
         scroll-behavior: smooth;
       }
+
+      [data-theme="dark"] {
+        color-scheme: dark;
+      }
+
+      [data-theme="dark"] body {
+        background: #0d1117;
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .site-header {
+        background: #161b22;
+        border-bottom-color: #30363d;
+      }
+
+      [data-theme="dark"] .header-brand {
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .nav-item {
+        color: #7d8590;
+      }
+
+      [data-theme="dark"] .nav-item:hover {
+        background: #21262d;
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .nav-item.active {
+        color: #58a6ff;
+      }
+
+      [data-theme="dark"] .dropdown-menu {
+        background: #21262d;
+        border-color: #30363d;
+        box-shadow: 0 8px 24px rgba(1, 4, 9, 0.5);
+      }
+
+      [data-theme="dark"] .dropdown-item {
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .dropdown-item:hover {
+        background: #161b22;
+      }
+
+      [data-theme="dark"] .dropdown-item.greeting {
+        color: #7d8590;
+        border-bottom-color: #30363d;
+      }
+
+      [data-theme="dark"] .action-btn {
+        color: #7d8590;
+        border-color: #30363d;
+      }
+
+      [data-theme="dark"] .action-btn:hover {
+        background: #21262d;
+        border-color: #7d8590;
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .container {
+        background: #0d1117;
+      }
+
+      [data-theme="dark"] .toc-sidebar {
+        background: #161b22;
+        border-right-color: #30363d;
+      }
+
+      [data-theme="dark"] .toc-title,
+      [data-theme="dark"] .toc-list .toc-h1 > a {
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .toc-list a {
+        color: #7d8590;
+      }
+
+      [data-theme="dark"] .toc-list a:hover {
+        background: #21262d;
+        color: #e6edf3;
+      }
+
+      [data-theme="dark"] .toc-list a.active {
+        background: rgba(88, 166, 255, 0.15);
+        color: #58a6ff;
+      }
+
+      [data-theme="dark"] .markdown-body {
+        background: #0d1117;
+        box-shadow: 0 1px 3px rgba(1, 4, 9, 0.5);
+      }
+
+      [data-theme="dark"] #loading,
+      [data-theme="dark"] .toc-loading {
+        color: #7d8590;
+      }
+
+      @media (max-width: 768px) {
+        .header-container {
+          padding: 0 16px;
+        }
+
+        .header-nav {
+          display: none;
+        }
+
+        .brand-icon {
+          font-size: 24px;
+        }
+
+        .brand-name {
+          font-size: 16px;
+        }
+
+        .toc-sidebar {
+          display: none;
+        }
+
+        .markdown-body {
+          margin: 16px;
+          padding: 24px 20px 48px;
+        }
+      }
     </style>
   </head>
   <body>
+    <header class="site-header">
+      <div class="header-container">
+        <a class="header-brand" href="#" aria-label="Agent 面试首页">
+          <span class="brand-icon" aria-hidden="true">🤖</span>
+          <span class="brand-name">Agent</span>
+        </a>
+
+        <nav class="header-nav" aria-label="主导航">
+          <a href="#" class="nav-item active">Agent面试</a>
+          <div class="dropdown">
+            <button
+              class="nav-item dropdown-toggle"
+              type="button"
+              aria-expanded="false"
+            >
+              网站相关
+            </button>
+            <div class="dropdown-menu">
+              <div class="dropdown-item greeting">👋 你好，我是Jason</div>
+              <a
+                class="dropdown-item"
+                href="https://github.com/sjzhang312/Agent"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                GitHub 仓库
+              </a>
+            </div>
+          </div>
+        </nav>
+
+        <div class="header-actions">
+          <a
+            class="action-btn github-btn"
+            href="https://github.com/sjzhang312/Agent"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="GitHub 仓库"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
+              />
+            </svg>
+          </a>
+          <button class="action-btn theme-toggle" type="button" aria-label="切换主题">
+            <svg
+              class="sun-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+            <svg
+              class="moon-icon"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
     <div class="container">
       <aside class="toc-sidebar">
         <nav class="toc-nav">
           <div class="toc-title">目录</div>
           <ul id="toc-list" class="toc-list">
-            <li style="color: #57606a; padding: 8px;">加载中...</li>
+            <li class="toc-loading">加载中...</li>
           </ul>
         </nav>
       </aside>
@@ -159,6 +601,105 @@
     <script src="https://cdn.jsdelivr.net/npm/marked@14.1.3/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/lib/index.min.js"></script>
     <script>
+      const HEADER_OFFSET = 80;
+
+      initDropdowns();
+      initThemeToggle();
+
+      function safeGetTheme() {
+        try {
+          return localStorage.getItem("theme");
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function safeSetTheme(theme) {
+        try {
+          localStorage.setItem("theme", theme);
+        } catch (_) {
+          // Theme persistence is optional; rendering should never depend on it.
+        }
+      }
+
+      function getPreferredTheme() {
+        const storedTheme = safeGetTheme();
+        if (storedTheme === "light" || storedTheme === "dark") {
+          return storedTheme;
+        }
+
+        return window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light";
+      }
+
+      function applyTheme(theme) {
+        document.documentElement.setAttribute("data-theme", theme);
+
+        const markdownLink = document.getElementById("markdown-css");
+        if (markdownLink) {
+          markdownLink.href =
+            `https://cdn.jsdelivr.net/npm/github-markdown-css@5.6.1/github-markdown-${theme}.min.css`;
+        }
+
+        const highlightLink = document.getElementById("highlight-css");
+        if (highlightLink) {
+          const highlightTheme = theme === "dark" ? "github-dark" : "github";
+          highlightLink.href =
+            `https://cdn.jsdelivr.net/npm/highlight.js@11.10.0/styles/${highlightTheme}.min.css`;
+        }
+      }
+
+      function initThemeToggle() {
+        const themeToggle = document.querySelector(".theme-toggle");
+        applyTheme(getPreferredTheme());
+
+        if (!themeToggle) return;
+
+        themeToggle.addEventListener("click", () => {
+          const currentTheme =
+            document.documentElement.getAttribute("data-theme") || "light";
+          const nextTheme = currentTheme === "dark" ? "light" : "dark";
+
+          applyTheme(nextTheme);
+          safeSetTheme(nextTheme);
+        });
+      }
+
+      function initDropdowns() {
+        const dropdowns = Array.from(document.querySelectorAll(".dropdown"));
+
+        dropdowns.forEach((dropdown) => {
+          const toggle = dropdown.querySelector(".dropdown-toggle");
+          if (!toggle) return;
+
+          toggle.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const isOpen = dropdown.classList.contains("open");
+
+            dropdowns.forEach((item) => {
+              item.classList.remove("open");
+              item
+                .querySelector(".dropdown-toggle")
+                ?.setAttribute("aria-expanded", "false");
+            });
+
+            dropdown.classList.toggle("open", !isOpen);
+            toggle.setAttribute("aria-expanded", String(!isOpen));
+          });
+        });
+
+        document.addEventListener("click", () => {
+          dropdowns.forEach((dropdown) => {
+            dropdown.classList.remove("open");
+            dropdown
+              .querySelector(".dropdown-toggle")
+              ?.setAttribute("aria-expanded", "false");
+          });
+        });
+      }
+
       (async function () {
         const target = document.getElementById("content");
         try {
@@ -291,7 +832,7 @@
           let ticking = false;
 
           function updateActiveLink() {
-            const scrollPos = window.scrollY + 100;
+            const scrollPos = window.scrollY + HEADER_OFFSET;
             let activeHeading = null;
 
             for (let i = headings.length - 1; i >= 0; i--) {
@@ -333,9 +874,9 @@
               const targetElement = document.getElementById(targetId);
 
               if (targetElement) {
-                const offsetTop = targetElement.offsetTop - 20;
+                const offsetTop = targetElement.offsetTop - HEADER_OFFSET;
                 window.scrollTo({
-                  top: offsetTop,
+                  top: Math.max(0, offsetTop),
                   behavior: 'smooth'
                 });
               }
